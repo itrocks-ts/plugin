@@ -1,0 +1,31 @@
+{
+  "author": {
+    "name": "Baptiste Pillot",
+    "email": "baptiste@pillot.fr"
+  },
+  "description": "A structure that allows classes to be extended with new behaviors via plugin",
+  "devDependencies": {
+    "@types/node": "^22.9",
+    "typescript": "5.6"
+  },
+  "files": [
+    "LICENSE",
+    "README.md",
+    "*.d.ts",
+    "*.js"
+  ],
+  "keywords": ["AOP", "extend", "it.rocks", "lightweight" ,"options" ,"plugin"],
+  "license": "LGPL-3.0-or-later",
+  "module": "./plugin.js",
+  "name": "@itrocks/plugin",
+  "optionalDependencies": {
+    "@itrocks/build": "latest"
+  },
+  "repository": "https://github.com/itrocks-ts/plugin",
+  "scripts": {
+    "build": "tsc"
+  },
+  "type": "module",
+  "types": "./plugin.d.ts",
+  "version": "0.0.2"
+}
