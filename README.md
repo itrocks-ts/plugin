@@ -1,3 +1,7 @@
+[![view on npm](https://badgen.net/npm/v/@itrocks/plugin)](https://www.npmjs.org/package/@itrocks/plugin)
+[![npm module downloads](https://badgen.net/npm/dt/@itrocks/plugin)](https://www.npmjs.org/package/@itrocks/plugin)
+[![GitHub repo dependents](https://badgen.net/github/dependents-repo/itrocks-ts/plugin)](https://github.com/itrocks-ts/plugin/network/dependents?dependent_type=REPOSITORY)
+[![GitHub package dependents](https://badgen.net/github/dependents-pkg/itrocks-ts/plugin)](https://github.com/itrocks-ts/plugin/network/dependents?dependent_type=PACKAGE)
 
 # plugin
 
