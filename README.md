@@ -7,7 +7,7 @@
 
 A structure that allows classes to be extended with new behaviors via plugin.
 
-## Install
+## Installation
 
 ```bash
 npm i @itrocks/plugin
