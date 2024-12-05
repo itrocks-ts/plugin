@@ -1,7 +1,8 @@
 [![view on npm](https://badgen.net/npm/v/@itrocks/plugin)](https://www.npmjs.org/package/@itrocks/plugin)
 [![npm module downloads](https://badgen.net/npm/dt/@itrocks/plugin)](https://www.npmjs.org/package/@itrocks/plugin)
-[![GitHub repo dependents](https://badgen.net/github/dependents-repo/itrocks-ts/plugin)](https://github.com/itrocks-ts/plugin/network/dependents?dependent_type=REPOSITORY)
-[![GitHub package dependents](https://badgen.net/github/dependents-pkg/itrocks-ts/plugin)](https://github.com/itrocks-ts/plugin/network/dependents?dependent_type=PACKAGE)
+[![GitHub repo dependents](https://badgen.net/github/dependents-repo/itrocks-ts/plugin?label=dependents)](https://github.com/itrocks-ts/plugin/network/dependents?dependent_type=REPOSITORY)
+[![Report issues on GitHub](https://badgen.net/github/open-issues/itrocks-ts/plugin?icon=github)](https://github.com/itrocks-ts/plugin/issues)
+[![Get support on Discord](https://badgen.net/discord/members/kbMjUq5F?icon=discord)](https://discord.gg/kbMjUq5F)
 
 # plugin
 
