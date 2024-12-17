@@ -1,8 +1,8 @@
-[![view on npm](https://badgen.net/npm/v/@itrocks/plugin)](https://www.npmjs.org/package/@itrocks/plugin)
-[![npm module downloads](https://badgen.net/npm/dt/@itrocks/plugin)](https://www.npmjs.org/package/@itrocks/plugin)
-[![GitHub repo dependents](https://badgen.net/github/dependents-repo/itrocks-ts/plugin?label=dependents)](https://github.com/itrocks-ts/plugin/network/dependents?dependent_type=REPOSITORY)
-[![Report issues on GitHub](https://badgen.net/github/open-issues/itrocks-ts/plugin?icon=github)](https://github.com/itrocks-ts/plugin/issues)
-[![Get support on Discord](https://badgen.net/discord/members/kbMjUq5F?icon=discord)](https://discord.gg/kbMjUq5F)
+[![npm version](https://img.shields.io/npm/v/@itrocks/plugin?logo=npm)](https://www.npmjs.org/package/@itrocks/plugin)
+[![npm downloads](https://img.shields.io/npm/dm/@itrocks/plugin)](https://www.npmjs.org/package/@itrocks/plugin)
+[![GitHub](https://img.shields.io/github/last-commit/itrocks-ts/plugin?color=2dba4e&label=commit&logo=github)](https://github.com/itrocks-ts/plugin)
+[![issues](https://img.shields.io/github/issues/itrocks-ts/plugin)](https://github.com/itrocks-ts/plugin/issues)
+[![discord](https://img.shields.io/discord/1314141024020467782?color=7289da&label=discord&logo=discord&logoColor=white)](https://discord.gg/WFPJjmUx)
 
 # plugin
 
