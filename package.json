@@ -30,11 +30,14 @@
 	"optionalDependencies": {
 		"@itrocks/build": "latest"
 	},
-	"repository": "https://github.com/itrocks-ts/plugin",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/itrocks-ts/plugin.git"
+	},
 	"scripts": {
 		"build": "tsc"
 	},
 	"type": "module",
 	"types": "./plugin.d.ts",
-	"version": "0.0.9"
+	"version": "0.0.10"
 }
