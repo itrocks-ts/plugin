@@ -14,9 +14,11 @@
 		"*.d.ts",
 		"*.js"
 	],
+	"homepage": "https://it.rocks",
 	"keywords": [
 		"AOP",
 		"extend",
+		"front-end",
 		"it.rocks",
 		"lightweight",
 		"options",
@@ -34,5 +36,5 @@
 	},
 	"type": "module",
 	"types": "./plugin.d.ts",
-	"version": "0.0.8"
+	"version": "0.0.9"
 }
