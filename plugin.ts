@@ -31,10 +31,9 @@ export class Options<O extends object>
 	plugins: (typeof Plugin<O>)[] = []
 }
 
-export default class Plugin<O extends object>
+export class Plugin<O extends object>
 {
 	constructor(public of: O) {}
 }
-export { Plugin }
 
 export type Plugins<O extends object> = { [index: string]: Plugin<O> }
