@@ -2,7 +2,7 @@
 export class HasPlugins<O extends object>
 {
 	readonly options = new Options<O>
-	readonly plugins = {} as Plugins<O>
+	readonly plugins:  Plugins<O> = {}
 
 	constructor(options: Partial<Options<O>> = {})
 	{
@@ -11,15 +11,21 @@ export class HasPlugins<O extends object>
 
 	protected constructPlugins()
 	{
-		for (const pluginType of this.options.plugins) {
-			this.plugins[pluginType.name] = new pluginType(this as unknown as O)
+		for (let plugin of this.options.plugins) {
+			if (typeof plugin === 'function') {
+				this.plugins[plugin.name] = plugin = new plugin()
+			}
+			else {
+				this.plugins[Object.getPrototypeOf(plugin).constructor.name] = plugin
+			}
+			plugin.of = this as any as HasPlugins<O> & O
 		}
 	}
 
-	protected initPlugins(initFunction = 'init')
+	protected initPlugins()
 	{
-		for (const plugin of (Object.values(this.plugins) as any as { [initFunction: string]: () => void }[])) {
-			if (plugin[initFunction]) plugin[initFunction].call(plugin)
+		for (const plugin of Object.values(this.plugins)) {
+			if (plugin.init !== Plugin.prototype.init) plugin.init()
 		}
 	}
 
@@ -28,12 +34,32 @@ export class HasPlugins<O extends object>
 export class Options<O extends object>
 {
 	[index: string]: any
-	plugins: (typeof Plugin<O>)[] = []
+	plugins: (Plugin<O> | typeof Plugin<O>)[] = []
 }
 
-export class Plugin<O extends object>
+export class Plugin<O extends object, PO extends PluginOptions = PluginOptions>
 {
-	constructor(public of: O) {}
+	public of!:     HasPlugins<O> & O
+	public options: PO
+
+	constructor(options: Partial<PO> = {})
+	{
+		this.options = Object.assign(this.defaultOptions(), options)
+	}
+
+	defaultOptions(): PO
+	{
+		return new PluginOptions() as PO
+	}
+
+	init()
+	{}
+
 }
 
-export type Plugins<O extends object> = { [index: string]: Plugin<O> }
+export class PluginOptions
+{
+	[index: string]: any
+}
+
+type Plugins<O extends object> = { [index: string]: Plugin<O> }
