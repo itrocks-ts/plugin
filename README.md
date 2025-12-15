@@ -6,7 +6,7 @@
 
 # plugin
 
-A structure that allows classes to be extended with new behaviors via plugin.
+A structure that allows classes to be extended with new behaviours via plugin.
 
 ## Installation
 
@@ -14,24 +14,32 @@ A structure that allows classes to be extended with new behaviors via plugin.
 npm i @itrocks/plugin
 ```
 
-## Usage
+## Core idea
 
-### Creating your Feature Class
+- Your **feature** extends `HasPlugins`
+- Each **plugin** extends `Plugin`
+- The feature owns the lifecycle
+- Plugins may:
+  - hook into lifecycle phases (`init`, or custom ones)
+  - override feature methods (AOP‑style)
+  - expose their own options
+  - depend on other plugins
 
-- Extend your feature class from [HasPlugins](#HasPlugins).
-- Call [super()](#HasPlugins-constructor), [constructPlugins()](#constructPlugins) and [initPlugins()](#initPlugins)
-  in its constructor.
-- If additional initialization phases are needed in your plugins,
-  call [initPlugins('initPhase')](#initPlugins),
-  replacing `initPhase` by each of your initialisation phase method.
+Everything is **runtime**, **typed**, and **opt‑in**.
 
-#### Example
+## Creating a feature
+
+Your feature must:
+1. extend `HasPlugins<Feature>`
+2. call `constructPlugins()`
+3. call `initPlugins()` (and optionally other phases)
 
 ```ts
-class Feature extends HasPlugins<Feature>
-{
+import { HasPlugins } from '@itrocks/plugin'
 
-	constructor(options: Partial<Options<Feature>> = {})
+export class Feature extends HasPlugins<Feature>
+{
+	constructor(options = {})
 	{
 		super(options)
 		this.constructPlugins()
@@ -40,132 +48,152 @@ class Feature extends HasPlugins<Feature>
 
 	do()
 	{
-		console.log('your feature does something')
+		console.log('Feature logic')
 	}
-
 }
 ```
 
-### Creating a plugin
+You are in charge. No hidden lifecycle.
 
-- Extend your plugin class from [Plugin](#Plugin).
-- implement the [constructor()](#Plugin-constructor) of your plugin.
-- implement the [init()](#init) phase of your plugin.
+## Creating a plugin
 
-#### Example
-
-```ts
-class FeaturePlugin extends Plugin<Feature>
-{
-
-	constructor()
-	{
-		super()
-		console.log('Your feature has been extended')
-    // You can initialise the independent parts of your plugin object here.
-    // Be careful: this.of is not initialised at this stage! 
-	}
-
-	init()
-	{
-		console.log('FeatureExtension.init()')
-    // Its the best place to initialise things: this.of has been initisalised with the main feature object.
-	}
-
-}
-```
-
-### Overloading functions
-
-A common way to add new features to your original feature is by overriding some of its functions
-during the [init()](#Plugin-init) phase.
-
-This common [AOP](https://en.wikipedia.org/wiki/Aspect-oriented_programming)
-design pattern can be implemented very simply:
-
-#### Example
+A plugin:
+- extends `Plugin<Feature, Options?>`
+- may run code in `constructor()` (no access to `this.of`)
+- usually does its real work in `init()` (access to `this.of`)
 
 ```ts
 import { Plugin }  from '@itrocks/plugin'
 import { Feature } from './feature.js'
 
-class FeaturePlugin extends Plugin<Feature>
+export class FeaturePlugin extends Plugin<Feature>
 {
-
+	constructor()
+	{
+		super()
+		// independent setup only — this.of is NOT available yet
+	}
 	init()
 	{
-		console.log('Your feature has been extended')
-
-		const superDo = this.of.do
-		this.of.do    = function() {
-			console.log('Your plugin does something before your feature does')
-			return superDo.call(this)
-		}
+		// this.of is now the Feature instance
+		console.log('Plugin attached to feature')
 	}
-
 }
 ```
 
-Note: Be sure to follow the [SOLID](https://en.wikipedia.org/wiki/SOLID) principles:
-your override can add features but should not alter the main feature's original behavior.
+Rule of thumb:
+- **constructor** → plugin‑local setup
+- **init** → interact with the feature or other plugins
 
-### Creating a plugin with options
+## Overriding feature methods (AOP)
 
-If you need configurable things into your plugin, you can instantiate your own options object.
-
-#### Example
+The intended pattern is **explicit method wrapping**.
 
 ```ts
-import { Plugin }        from '@itrocks/plugin'
-import { PluginOptions } from '@itrocks/plugin'
-import { Feature }       from './feature.js'
+export class FeaturePlugin extends Plugin<Feature>
+{
+	init()
+	{
+		const superDo = this.of.do
+		this.of.do    = function ()
+		{
+			console.log('Before feature logic')
+			return superDo.call(this)
+		}
+	}
+}
+```
+
+Guideline:
+- extend behaviour
+- do not break existing contracts
+- keep overrides small and readable
+
+Yes, SOLID still applies.
+Avoid stacking too many overrides on the same method.
+
+## Plugins with options
+
+Plugins can define their own strongly‑typed options.
+
+```ts
+import { Plugin, PluginOptions } from '@itrocks/plugin'
 
 class Options extends PluginOptions
 {
-	item: 'defaultValue' | 'value1' | 'value2' | 'value3' = 'defaultValue'
+	mode: 'soft' | 'hard' = 'soft'
 }
 
-class FeaturePluginWithOptions extends Plugin<Feature, Options>
+export class ConfigurablePlugin extends Plugin<Feature, Options>
 {
-
+	defaultOptions()
+	{
+		return new Options()
+	}
 	init()
 	{
-		console.log('Your feature has been extended')
-
-		const superDo = this.of.do
-		this.of.do    = function() {
-			console.log('Your plugin does something before your feature does, using option ' + this.options.item)
-			return superDo.call(this)
-		}
+		console.log('Mode:', this.options.mode)
 	}
-
 }
 ```
 
-### Instantiating your feature
+Important:
+- always implement `defaultOptions()` if you use options
+- `this.options` is fully initialised before `init()`
 
-Choose the options and plugins for each of your feature class instances.
+## Using plugins
 
-#### Example
+### Default options
 
-**Without plugin option, or using default plugin option values**
 ```ts
-new Feature({ plugins: [FeaturePlugin] }).do()
+new Feature({
+	plugins: [ConfigurablePlugin]
+}).do()
 ```
 
-**With custom option values**
+### Custom options
+
 ```ts
-const featurePlugin = new FeaturePlugin({
-  item: 'value1'
-})
-new Feature({ plugins: [featurePlugin] }).do()
+new Feature({
+	plugins: [new ConfigurablePlugin({ mode: 'hard' })]
+}).do()
 ```
+
+You may freely mix:
+- plugin classes
+- plugin instances
+
+## Lifecycle phases
+
+By default, `initPlugins()` calls `plugin.init()`.
+
+You can define **additional phases**:
+
+### Feature side
+
+```ts
+this.initPlugins('afterRender')
+```
+
+### Plugin side
+
+```ts
+afterRender()
+{
+	// optional phase
+}
+```
+
+If a plugin does not implement the phase → nothing happens.
+No guards needed.
 
 ## HasPlugins API
 
-The class your feature class should inherit from.
-You need to remind HasPlugins the feature class name into a generic.
+```ts
+class HasPlugins<O extends object>
+```
 
+**Usage**
 ```ts
 import { HasPlugins } from '@itrocks/plugin'
 class Feature extends HasPlugins<Feature> {}
@@ -173,135 +201,125 @@ class Feature extends HasPlugins<Feature> {}
 
 ### Properties
 
-// TODO Complete this sub-section... options, plugins. including access to this.plugins.PluginClassName example
-// difference between this.options.plugins and this.plugins :
-// - this.options.plugins is an array containing plugin types or plugin instances
-// - this.plugins associates the plugin type name and the plugin instance associated to your feature instance
-
 #### options
-  
-The `options` property receives the instance options, including the plugin list.
+
+Merged feature options.
+Includes the `plugins` list.
 
 #### plugins
 
-The `plugins` property is an object where each property name corresponds to a plugin type name,
-and the value is the plugin instance associated with your feature.
+Object mapping plugin **class name → instance**
+
+```ts
+this.plugins.FeaturePlugin
+this.plugins.ConfigurablePlugin
+```
+
+This is the canonical access point for inter‑plugin communication.
 
 ### Methods
 
-// TODO Complete this sub-sections: ... constructor, constructPlugins(), initPlugins()
-// - constructor(): can receive main feature options (including a list of plugins) to initialise this.options.
-// - constructPlugins() implements each of this.options.plugins, store their instance into this.plugins,
-// initialises their plugin.of property, and must be called from your feature constructor. 
-// - initPlugins() calls each plugin's init() function (or other initFunction). Called from your feature constuctor too,
-// after constructPlugins() call. If plugin has no init function, don't worry: it won't called.
+#### constructor(options?)
+
+Stores feature options only, including plugin types or instances.
+Does **not** build plugins.
 
 #### constructPlugins()
 
-Instantiates each plugin listed in `options.plugins`. The instances are stored in the [plugins](#plugins) property.
-// TODO if options.plugins contains already instantiated options (eg with options),
-// these instances are used instead of being instantiated again.
+- instantiates plugins from `options.plugins`
+- assigns `plugin.of`
+- populates `this.plugins`
 
-#### initPlugins()
+Must be called manually, eg from your feature constructor.
 
-Calls [init()](#init) for each plugin instance stored in the [plugins](#plugins) property
-if it is instantiated.
+#### initPlugins(initFunction = 'init')
 
-```ts
-initPlugins(initFunction = 'init')
-```
+Calls `plugin[initFunction]()` **only if**:
+- the method exists
+- it is defined or overridden by the plugin
 
-Your [feature class constructor](#creating-your-feature-class)
-can call this method with different values for `initFunction`.
-The matching functions in your plugins will be called, if they are instantiated.
-
-#### constructor
-
-#### constructPlugins
-
-#### initPlugins
-
-## Options API
-
-The options for your feature link an option name to its value.
-
-// TODO explain that if your feature extends HasPlugins, its options should extend Options
-
-One specific option is the `plugins` applied to your feature:
-
-// TODO Example
-
-### plugins
-
-The `plugins` property consists of an array of [Plugin](#plugin) types you want to apply to your feature.
-
-These plugins will be instantiated during the [constructPlugins()](#constructPlugins) phase,
-and their instances will be stored in the feature's [plugins](#plugins) property.
+Safe by design.
 
 ## Plugin API
 
 ```ts
-class Plugin<O extends object, PO extends PluginOptions = PluginOptions>
+class Plugin<O, PO extends PluginOptions = PluginOptions>
 ```
 
-The class your plugin classes must extend.
-
-// TODO Presentation
-// TODO class generics: feature class O is mandatory, PO options are optional (only if your plugin need them)
-// TODO extend example.
+**Usage**
+```ts
+import { Plugin }  from '@itrocks/plugin'
+import { Feature } from './feature'
+class FeaturePlugin extends Plugin<Feature>
+```
 
 ### Properties
 
 #### of
 
-// TODO document this: beware it is initialised by the HasPlugins feature's constructPlugins() method only after
-// the constructor is called. So it will be undefined during constructor call, and will contain the main feature
-// instance after that (eg during initPlugins and any other methods when not called by constructor).
+Reference to the feature instance.
+Available **after** `constructPlugins()`.
 
-The `of` property stores the main feature object, which extends [HasPlugins](#HasPlugins).
-
-You can access other plugins you depend on through `of.plugins`
-once the [constructorPlugins()](#constructPlugins) phase is complete,
-for example, during the [init()](#init) phase or when executing [overloaded functions](#Overloading-functions).
+Never rely on it inside the constructor.
 
 #### options
 
-// TODO document this : will contain the plugin options (if there are)
+Plugin options.
 
 ### Methods
 
-// TODO complete theses sections if needed.
+#### constructor(options?)
 
-#### constructor
+Receives partial options, that will be merged with defaults and stored into the `options` property.
 
+Beware when you override this: `this.of` is **undefined** here.
+
+#### defaultOptions()
+
+Returns a fresh options object, with default values.
+Mandatory if your plugin supports options.
+
+**Example**
 ```ts
-constructor(options: Partial<PO> = {})
-```
-
-Your plugin can execute code during its `constructor` phase.
-
-At this stage, not all feature plugins are instantiated, so avoid accessing plugins you may depend on.
-
-// Stores the options in the [options](#options) property.
-// TODO this.of is not available here!
-
-#### defaultOptions
-
-// TODO if the plugin accepts options, you should return a new Options() as PO here, with defaults.
-// The instantiation is always the same (replace `Options` with your own options class that inherits from PluginOptions):
-// This is mandatory so that the this.options contains default option object if constructor is called with partial or no options.
-
-```ts
+import { PluginOptions } from '@itrocks/plugin'
+import { Plugin }        from '@itrocks/plugin'
+import { Feature }       from './feature'
+class Options extends PluginOptions
+{
+  mode: 'soft' | 'hard' = 'soft'
+}
+export class ConfigurablePlugin extends Plugin<Feature, Options>
+{
   defaultOptions()
   {
     return new Options()
   }
+}
 ```
 
 #### init()
 
-Your plugin can execute code during its `init` phase.
+Main initialisation hook.
 
-At this stage, this.of and all feature plugins and are instantiated.
-You can access your feature from this.of, so you can extend its behaviour.
-You can access them from this.of.plugins, so you can access dependencies when your plugins depends on other ones.
+All plugins are ready.
+
+`this.of` and `this.of.plugins` are safe to use.
+
+## Design goals
+
+- explicit over implicit
+- no decorators
+- no reflection
+- predictable runtime behaviour
+- TypeScript‑first, but JavaScript‑friendly
+
+## Real‑world usage
+
+This system is used in production for:
+- [@itrocks/table](https://github.com/itrocks-ts/table) behaviours (`TableLink`, `HeadersSize`, etc.)
+- [@itrocks/xtarget](https://github.com/itrocks-ts/xtarget) behaviours
+- UI locking / feeds
+- cross‑plugin coordination
+- progressive feature composition
+
+Patterns scale from small widgets to full applications.
