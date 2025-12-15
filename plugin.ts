@@ -1,5 +1,5 @@
 
-export class HasPlugins<O extends object>
+export class HasPlugins<O extends object, FO extends Options<O> = Options<O>>
 {
 	readonly options = new Options<O>
 	readonly plugins:  Plugins<O> = {}
@@ -18,14 +18,16 @@ export class HasPlugins<O extends object>
 			else {
 				this.plugins[Object.getPrototypeOf(plugin).constructor.name] = plugin
 			}
-			plugin.of = this as any as HasPlugins<O> & O
+			plugin.of = this as any as HasPlugins<O, FO> & O
 		}
 	}
 
-	protected initPlugins()
+	protected initPlugins(initFunction: PropertyKey = 'init')
 	{
 		for (const plugin of Object.values(this.plugins)) {
-			if (plugin.init !== Plugin.prototype.init) plugin.init()
+			const func = (plugin as any)[initFunction]
+			const base = (Plugin.prototype as any)[initFunction]
+			if ((func !== base) && (typeof func === 'function')) func.call(plugin)
 		}
 	}
 
@@ -37,9 +39,9 @@ export class Options<O extends object>
 	plugins: (Plugin<O> | typeof Plugin<O>)[] = []
 }
 
-export class Plugin<O extends object, PO extends PluginOptions = PluginOptions>
+export class Plugin<O extends object, PO extends PluginOptions = PluginOptions, FO extends Options<O> = Options<O>>
 {
-	public of!:     HasPlugins<O> & O
+	public of!:     HasPlugins<O, FO> & O
 	public options: PO
 
 	constructor(options: Partial<PO> = {})
